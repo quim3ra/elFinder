@@ -815,12 +815,8 @@ class elFinder {
 						$tmpfname = tempnam(sys_get_temp_dir(), 'UPL');
 						file_put_contents($tmpfname, $data);
 						$files['tmp_name'][$i] = $tmpfname;
-<<<<<<< HEAD
-						$files['name'][$i] = preg_replace('/[\/\\?*:|"<>]/', '_', preg_replace('#^.*?([^/]+)$#', '$1', $url));
-=======
 						$_name = isset($args['name'][$i])? $args['name'][$i] : preg_replace('#^.*?([^/]+)$#', '$1', rawurldecode($url));
 						$files['name'][$i] = preg_replace('/[\/\\?*:|"<>]/', '_', $_name);
->>>>>>> refs/heads/pixlr_edit
 						$files['error'][$i] = 0;
 					}
 				}
