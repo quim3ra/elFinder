@@ -67,7 +67,8 @@ class elFinder {
 		'search'    => array('q' => true, 'mimes' => false),
 		'info'      => array('targets' => true),
 		'dim'       => array('target' => true),
-		'resize'    => array('target' => true, 'width' => true, 'height' => true, 'mode' => false, 'x' => false, 'y' => false, 'degree' => false)
+		'resize'    => array('target' => true, 'width' => true, 'height' => true, 'mode' => false, 'x' => false, 'y' => false, 'degree' => false),
+		'pixlr'     => array('target' => false, 'node' => false, 'image' => false, 'type' => false, 'title' => false)
 	);
 	
 	/**
@@ -237,7 +238,9 @@ class elFinder {
 	 * @author Dmitry (dio) Levashov
 	 **/
 	public function bind($cmd, $handler) {
-		$cmds = array_map('trim', explode(' ', $cmd));
+		$cmds = $cmd == '*'
+			? array_keys($this->commands)
+			: array_map('trim', explode(' ', $cmd));
 		
 		foreach ($cmds as $cmd) {
 			if ($cmd) {
@@ -806,27 +809,38 @@ class elFinder {
 		$files  = isset($args['FILES']['upload']) && is_array($args['FILES']['upload']) ? $args['FILES']['upload'] : array();
 		$result = array('added' => array(), 'header' => empty($args['html']) ? false : 'Content-Type: text/html; charset=utf-8');
 		
+		if (!$volume) {
+			return array('error' => $this->error(self::ERROR_UPLOAD, self::ERROR_TRGDIR_NOT_FOUND, '#'.$target), 'header' => $header);
+		}
+		
 		if (empty($files)) {
-			if ($volume && isset($args['upload']) && is_array($args['upload'])) {
+			if (isset($args['upload']) && is_array($args['upload'])) {
+				$non_uploads = array();
 				foreach($args['upload'] as $i => $url) {
 					$data = $this->curl_get_contents($url);
 					if ($data) {
-						$tmpfname = tempnam(sys_get_temp_dir(), 'UPL');
-						file_put_contents($tmpfname, $data);
-						$files['tmp_name'][$i] = $tmpfname;
-						$_name = isset($args['name'][$i])? $args['name'][$i] : preg_replace('#^.*?([^/]+)$#', '$1', rawurldecode($url));
-						$files['name'][$i] = preg_replace('/[\/\\?*:|"<>]/', '_', $_name);
-						$files['error'][$i] = 0;
+						$_name = isset($args['name'][$i])? $args['name'][$i] : preg_replace('~^.*?([^/#?]+)(?:#.*)?$~', '$1', rawurldecode($url));
+						if ($_name) {
+							$_ext = '';
+							if (preg_match('/(\.[a-z0-9]{1,7})$/', $_name, $_match)) {
+								$_ext = $_match[1];
+							}
+							$tmpfname = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ELF_' . md5($url.microtime()) . $_ext;
+							if (file_put_contents($tmpfname, $data)) {
+								$non_uploads[$tmpfname] = true;
+								$files['tmp_name'][$i] = $tmpfname;
+								$files['name'][$i] = preg_replace('/[\/\\?*:|"<>]/', '_', $_name);
+								$files['error'][$i] = 0;
+							} else {
+								@ unlink($tmpfname);
+							}
+						}
 					}
 				}
 			}
 			if (empty($files)) {
 				return array('error' => $this->error(self::ERROR_UPLOAD, self::ERROR_UPLOAD_NO_FILES), 'header' => $header);
 			}
-		}
-		
-		if (!$volume) {
-			return array('error' => $this->error(self::ERROR_UPLOAD, self::ERROR_TRGDIR_NOT_FOUND, '#'.$target), 'header' => $header);
 		}
 		
 		foreach ($files['name'] as $i => $name) {
@@ -842,7 +856,7 @@ class elFinder {
 				$result['warning'] = $this->error(self::ERROR_UPLOAD_FILE, $name, self::ERROR_UPLOAD_TRANSFER);
 				$this->uploadDebug = 'Upload error: unable open tmp file';
 				if (! is_uploaded_file($tmpname)) {
-					@ unlink($tmpname);
+					if (@ unlink($tmpname)) unset($non_uploads[$tmpfname]);
 					continue;
 				}
 				break;
@@ -852,17 +866,19 @@ class elFinder {
 				$result['warning'] = $this->error(self::ERROR_UPLOAD_FILE, $name, $volume->error());
 				fclose($fp);
 				if (! is_uploaded_file($tmpname)) {
-					unlink($tmpname);
+					if (@ unlink($tmpname)) unset($non_uploads[$tmpfname]);;
 					continue;
 				}
 				break;
 			}
 			
 			fclose($fp);
-			if (! is_uploaded_file($tmpname)) unlink($tmpname);
+			if (! is_uploaded_file($tmpname) && @ unlink($tmpname)) unset($non_uploads[$tmpfname]);
 			$result['added'][] = $file;
 		}
-		
+		foreach(array_keys($non_uploads[$tmpfname]) as $_temp) {
+			@ unlink($_temp);
+		}
 		return $result;
 	}
 		
@@ -1076,7 +1092,37 @@ class elFinder {
 			? array('changed' => array($file))
 			: array('error' => $this->error(self::ERROR_RESIZE, $volume->path($target), $volume->error()));
 	}
-	
+
+	/**
+	 * Edit on Pixlr.com
+	 *
+	 * @param  array  command arguments
+	 * @return array
+	 * @author Naoki Sawada
+	 **/
+	 protected function pixlr($args) {
+		
+	 	if (! empty($args['target'])) {
+		 	$args['upload'] = array( $args['image'] );
+			$args['name']   = array( preg_replace('/\.[a-z]{1,4}$/i', '', $args['title']).'.'.$args['type'] );
+		
+			$res = $this->upload($args);
+			if (isset($res['warning'])) {
+				$cmd = 'error(elf.i18n("'.join('","', $res['warning']).'"))';
+			} else {
+				$cmd = 'exec("reload")';
+			}
+			$script = 'var elf=window.opener.document.getElementById(\''.htmlspecialchars($args['node']).'\').elfinder; elf.'.$cmd.'; window.close();';
+			
+	 	} else {
+	 		$script = 'window.close();';
+	 	}
+	 	
+	 	echo '<html><head><script>'.$script.'</script></head><body><a href="#" onlick="window.close();return false;">Close this window</a></body></html>';
+	 	
+		exit();
+	}
+
 	/***************************************************************************/
 	/*                                   utils                                 */
 	/***************************************************************************/
