@@ -141,8 +141,8 @@
 			left:50%;
 			top:1000px;
 		}
-*/		
-	</style>
+		
+*/	</style>
 
 	<script type="text/javascript" charset="utf-8">
 		$().ready(function() {
@@ -153,9 +153,9 @@
 				// url : 'php/connector.php',
 				url : 'php/connector.php',
 				// transport : new elFinderSupportVer1(),
-				// getFileCallback : function(files, fm) {
-				// 	console.log(files);
-				// },
+				getFileCallback : function(files, fm) {
+					console.log(files);
+				},
 				// handlers : {
 				// 	select : function(e) {
 				// 		console.log(e.data)
