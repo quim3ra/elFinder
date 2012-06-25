@@ -262,7 +262,7 @@ $opts = array(
 			'tmbCrop'    => false,
 			'tmbBgColor' => 'transparent',
 			'accessControl' => 'access',
-			'acceptedName'    => '/^[^.].*$/',
+			'acceptedName'    => '/^[^\.].*$/',
 			'attributes' => array(
 				array(
 					'pattern' => '/\.js$/',
