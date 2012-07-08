@@ -264,6 +264,7 @@ $opts = array(
 			'tmbBgColor' => 'transparent',
 			'accessControl' => 'access',
 			'acceptedName'    => '/^[^\.].*$/',
+			// 'tmbSize' => 128,
 			'attributes' => array(
 				array(
 					'pattern' => '/\.js$/',
