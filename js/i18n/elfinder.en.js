@@ -80,7 +80,15 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'errNetMountNoDriver'  : 'Unsupported protocol.',     // added 17.04.2012
 			'errNetMountFailed'    : 'Mount failed.',         // added 17.04.2012
 			'errNetMountHostReq'   : 'Host required.', // added 18.04.2012
+			'errSessionExpires'    : 'Your session has expired due to inactivity.',
+			'errCreatingTempDir'   : 'Unable to create temporary directory: "$1"',
+			'errFtpDownloadFile'   : 'Unable to download file from FTP: "$1"',
+			'errFtpUploadFile'     : 'Unable to upload file to FTP: "$1"',
+			'errFtpMkdir'          : 'Unable to create remote directory on FTP: "$1"',
+			'errArchiveExec'       : 'Error while archiving files: "$1"',
+			'errExtractExec'       : 'Error while extracting files: "$1"',
 			'errNetUnMount'        : 'Unable to unmount', // added 30.04.2012
+
 			/******************************* commands names ********************************/
 			'cmdarchive'   : 'Create archive',
 			'cmdback'      : 'Back',
@@ -143,10 +151,16 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'ntfextract'  : 'Extracting files from archive',
 			'ntfsearch'   : 'Searching files',
 			'ntfresize'   : 'Resizing images',
+<<<<<<< HEAD
 			'ntfsmth'     : 'Doing something >_<',
       		'ntfloadimg'  : 'Loading image',
       		'ntfnetmount' : 'Mounting network volume', // added 18.04.2012
       		'ntfnetunmount': 'Unmounting network volume', // added 30.04.2012
+=======
+			'ntfsmth'     : 'Doing something',
+			'ntfloadimg'  : 'Loading image',
+			'ntfnetmount' : 'Mounting network volume', // added 18.04.2012
+>>>>>>> 2.x
 			
 			/************************************ dates **********************************/
 			'dateUnknown' : 'unknown',
