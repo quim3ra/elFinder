@@ -151,17 +151,10 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'ntfextract'  : 'Extracting files from archive',
 			'ntfsearch'   : 'Searching files',
 			'ntfresize'   : 'Resizing images',
-<<<<<<< HEAD
-			'ntfsmth'     : 'Doing something >_<',
-			'ntfloadimg'  : 'Loading image',
-			'ntfnetmount' : 'Mounting network volume', // added 18.04.2012
-			'ntfnetunmount': 'Unmounting network volume', // added 30.04.2012
-=======
 			'ntfsmth'     : 'Doing something',
 			'ntfloadimg'  : 'Loading image',
 			'ntfnetmount' : 'Mounting network volume', // added 18.04.2012
       		'ntfnetunmount': 'Unmounting network volume', // added 30.04.2012
->>>>>>> dropbox
 			'ntfdim'      : 'Acquiring image dimension', // added 20.05.2013
 			
 			/************************************ dates **********************************/

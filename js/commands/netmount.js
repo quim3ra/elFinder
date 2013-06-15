@@ -71,7 +71,6 @@ elFinder.prototype.commands.netmount = function() {
 				content.append(hidden);
 				
 				content.find('.elfinder-netmount-tr').hide();
-				inputs.protocol.change();
 
 				opts.buttons[fm.i18n('btnMount')] = function() {
 					var protocol = inputs.protocol.val();
