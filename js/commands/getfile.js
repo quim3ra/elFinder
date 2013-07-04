@@ -71,6 +71,7 @@ elFinder.prototype.commands.getfile = function() {
 			if (file.tmb && file.tmb != 1) {
 				file.tmb = tmb + file.tmb;
 			}
+
 			if (!file.width && !file.height) {
 				if (file.dim) {
 					dim = file.dim.split('x');
