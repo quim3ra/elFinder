@@ -2,7 +2,7 @@
  * Japanese translation
  * @author Tomoaki Yoshida <info@yoshida-studio.jp>
  * @author Naoki Sawada <hypweb@gmail.com>
- * @version 2013-05-20
+ * @version 2013-07-03
  */
 if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object') {
 	elFinder.prototype.i18.jp = {
@@ -75,6 +75,10 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'errArcSymlinks'       : 'シンボリックリンクまたは許容されないファイル名を含むアーカイブはセキュリティ上、解凍できません', // edited 25.06.2012
 			'errArcMaxSize'        : 'アーカイブが許容されたサイズを超えています',
 			'errResize'            : '"$1"をリサイズできません',
+			'errResizeDegree'      : 'イメージの回転角度が不正です',  // added 7.3.2013
+			'errResizeRotate'      : 'イメージの回転ができません',  // added 7.3.2013
+			'errResizeSize'        : '指定されたイメージサイズが不正です',  // added 7.3.2013
+			'errResizeNoChange'    : 'イメージサイズなどの変更がありません',  // added 7.3.2013
 			'errUsupportType'      : 'このファイルタイプはサポートされません',
 			'errNotUTF8Content'    : 'ファイル "$1" には UTF-8 以外の文字が含まれているので編集できません',  // added 9.11.2011
 			'errNetMount'          : '"$1"をマウントできません', // added 17.04.2012
@@ -88,6 +92,7 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'errFtpMkdir'          : 'FTP にリモートディレクトリを作成できません："$1"',
 			'errArchiveExec'       : 'ファイルのアーカイブ中にエラーが発生しました："$1"',
 			'errExtractExec'       : 'ファイルの抽出中にエラーが発生しました："$1"',
+			'errNetUnMount'        : 'アンマウントできません', // added 30.04.2012
 			
 			/******************************* commands names ********************************/
 			'cmdarchive'   : 'アーカイブ作成',
@@ -118,6 +123,9 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'cmdresize'    : 'リサイズと回転',
 			'cmdsort'      : 'ソート',
 			'cmdnetmount'  : 'ネットワークボリュームをマウント', // added 18.04.2012
+			'cmdnetunmount': 'アンマウント', // added 30.04.2012
+
+			'cmdpixlr'     : 'Pixlr で編集',
 			
 			/*********************************** buttons ***********************************/ 
 			'btnClose'  : '閉じる',
@@ -128,6 +136,8 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'btnNo'     : 'いいえ',
 			'btnYes'    : 'はい',
 			'btnMount'  : 'マウント',  // added 18.04.2012
+			'btnApprove': '$1へ行き認可する', // added 26.04.2012
+			'btnUnmount': 'アンマウント', // added 30.04.2012
 			/******************************** notifications ********************************/
 			'ntfopen'     : 'フォルダーを開いています',
 			'ntffile'     : 'ファイルを開いています',
@@ -149,7 +159,9 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'ntfsmth'     : '処理をしています',
       		'ntfloadimg'  : 'イメージを読み込んでいます',
       		'ntfnetmount' : 'ネットワークボリュームをマウントしています', // added 18.04.2012
+      		'ntfnetunmount': 'ネットワークボリュームをアンマウントしています', // added 30.04.2012
 			'ntfdim'      : '画像サイズを取得しています', // added 20.05.2013
+			'ntfreaddir'  : 'ホルダ情報を読み取っています', // added 01.07.2013
 			
 			/************************************ dates **********************************/
 			'dateUnknown' : '不明',
@@ -176,9 +188,9 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'sortFoldersFirst'  : 'フォルダ優先', // added 21.06.2012
 
 			/********************************** messages **********************************/
-			'confirmReq'      : '確認必須です',
-			'confirmRm'       : '本当にファイルを削除しますか?<br/>この操作は取り消せません!',
-			'confirmRepl'     : '古いファイルを新しいファイルで上書きしますか?',
+			'confirmReq'      : '処理を実行しますか？',
+			'confirmRm'       : '本当にファイルを削除しますか?<br/>この操作は取り消せません！',
+			'confirmRepl'     : '古いファイルを新しいファイルで上書きしますか？',
 			'apllyAll'        : '全てに適用します',
 			'name'            : '名前',
 			'size'            : 'サイズ',
@@ -231,6 +243,7 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'dontforget'      : 'タオル忘れちゃだめよー。',
 			'shortcutsof'     : 'ショートカットは利用できません',
 			'dropFiles'       : 'ここにファイルをドロップ',
+			'dropFilesBrowser': 'ブラウザからファイルをドロップまたは貼り付け', // added 30.05.2012
 			'or'              : 'または',
 			'selectForUpload' : 'アップロードするファイルを選択',
 			'moveFiles'       : 'ファイルを移動',
@@ -252,6 +265,7 @@ if (elFinder && elFinder.prototype && typeof(elFinder.prototype.i18) == 'object'
 			'port'                : 'ポート', // added 18.04.2012
 			'user'                : 'ユーザー名', // added 18.04.2012
 			'pass'                : 'パスワード', // added 18.04.2012
+			'confirmUnmount'      : '$1をアンマウントしますか?',  // added 30.04.2012
 
 			/********************************** mimetypes **********************************/
 			'kindUnknown'     : '不明',
