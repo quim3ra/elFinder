@@ -523,9 +523,21 @@ elFinder.prototype.commands.resize = function() {
 							dfrd.reject(error);
 						})
 						.done(function() {
-							dfrd.resolve();
-						});
-						
+            	fm.request({
+              	data : {cmd : 'dim', target : file.hash},
+                notify : {type : 'dim', cnt : 1, hideCnt : true},
+                preventDefault : true
+              })
+              .done(function(data){
+                if (data.dim) {
+                	var dim = data.dim.split('x');
+              		m.file(this.hash);
+                	this.width = dim[0];
+                  this.height = dim[1];
+                }
+                dfrd.resolve();
+              }.bind(file));
+            });
 					},
 					buttons = {},
 					hline   = 'elfinder-resize-handle-hline',
