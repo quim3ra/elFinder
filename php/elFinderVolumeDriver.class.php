@@ -2204,6 +2204,13 @@ abstract class elFinderVolumeDriver {
 				if ($this->tmbURL && !isset($stat['tmb']) && $this->canCreateTmb($p, $stat)) {
 					$tmb = $this->gettmb($p, $stat);
 					$stat['tmb'] = $tmb ? $tmb : 1;
+					if(!isset($stat['width']) && !isset($stat['height'])) {
+            if (($dim = $this->_dimensions($path, $stat['mime']))) {
+              $s = explode('x', $dim);
+              $stat['width']  = $s[0];
+              $stat['height'] = $s[1];
+            }
+          }
 				}
 				
 			}
