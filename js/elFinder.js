@@ -116,7 +116,6 @@ window.elFinder = function(node, opts) {
 			archives      : [],
 			extract       : [],
 			copyOverwrite : true,
-			uploadMaxSize : 0,
 			tmb           : false // old API
 		},
 		
@@ -747,20 +746,6 @@ window.elFinder = function(node, opts) {
 			return '';
 		}
 		
-		if (file.url == '1') {
-			this.request({
-				data : {cmd : 'url', target : hash},
-				preventFail : true,
-				options: {async: false}
-			})
-			.done(function(data) {
-				file.url = data.url || '';
-			})
-			.fail(function() {
-				file.url = '';
-			});
-		}
-		
 		if (file.url) {
 			return file.url;
 		}
@@ -841,30 +826,6 @@ window.elFinder = function(node, opts) {
 	this.validResponse = function(cmd, data) {
 		return data.error || this.rules[this.rules[cmd] ? cmd : 'defaults'](data);
 	}
-	
-	/**
-	 * Return bytes from ini formated size
-	 * 
-	 * @param  String  ini formated size
-	 * @return Integer
-	 */
-	this.returnBytes = function(val) {
-		if (val == '-1') val = 0;
-		if (val) {
-			// for ex. 1mb, 1KB
-			val = val.replace(/b$/i, '');
-			var last = val.charAt(val.length - 1).toLowerCase();
-			val = val.replace(/[gmk]$/i, '');
-			if (last == 'g') {
-				val = val * 1024 * 1024 * 1024;
-			} else if (last == 'm') {
-				val = val * 1024 * 1024;
-			} else if (last == 'k') {
-				val = val * 1024;
-			}
-		}
-		return val;
-	};
 	
 	/**
 	 * Proccess ajax request.
@@ -995,11 +956,6 @@ window.elFinder = function(node, opts) {
 
 				if (response.netDrivers) {
 					self.netDrivers = response.netDrivers;
-				}
-
-				if (cmd == 'open' && !!data.init) {
-					self.uplMaxSize = self.returnBytes(response.uplMaxSize);
-					self.uplMaxFile = response.uplMaxFile;
 				}
 
 				dfrd.resolve(response);
@@ -1590,9 +1546,9 @@ window.elFinder = function(node, opts) {
 			$.each(e.data.changed||[], function(i, file) {
 				var hash = file.hash;
 				if ((files[hash].width && !file.width) || (files[hash].height && !file.height)) {
-                   files[hash].width = undefined;
-                   files[hash].height = undefined;
-	            }
+					files[hash].width = undefined;
+					files[hash].height = undefined;
+				}
 				files[hash] = files[hash] ? $.extend(files[hash], file) : file;
 			});
 		})
@@ -2015,156 +1971,10 @@ elFinder.prototype = {
 	iframeCnt : 0,
 	
 	uploads : {
-		// check droped contents
-		checkFile : function(data, fm) {
-			if (!!data.checked || data.type == 'files') {
-				return data.files;
-			} else if (data.type == 'data') {
-				var dfrd = $.Deferred(),
-				files = [],
-				paths = [],
-				dirctorys = [],
-				entries = [],
-				processing = 0,
-				
-				readEntries = function(dirReader) {
-					var toArray = function(list) {
-						return Array.prototype.slice.call(list || []);
-					};
-					var readFile = function(fileEntry, callback) {
-						var dfrd = $.Deferred();
-						if (typeof fileEntry == 'undefined') {
-							dfrd.reject('empty');
-						} else if (fileEntry.isFile) {
-							fileEntry.file(function (file) {
-								dfrd.resolve(file);
-							}, function(e){
-								dfrd.reject();
-							});
-						} else {
-							dfrd.reject('dirctory');
-						}
-						return dfrd.promise();
-					};
-			
-					dirReader.readEntries(function (results) {
-						if (!results.length) {
-							var len = entries.length - 1;
-							var read = function(i) {
-								readFile(entries[i]).done(function(file){
-									if (! (fm.OS == 'win' && file.name.match(/^(?:desktop\.ini|thumbs\.db)$/i))
-											&&
-										! (fm.OS == 'mac' && file.name.match(/^\.ds_store$/i))) {
-										paths.push(entries[i].fullPath);
-										files.push(file);
-									}
-								}).fail(function(e){
-									if (e == 'dirctory') {
-										// dirctory
-										dirctorys.push(entries[i]);
-									} else if (e == 'empty') {
-										// dirctory is empty
-									} else {
-										// why fail?
-									}
-								}).always(function(){
-									processing--;
-									if (i < len) {
-										processing++;
-										read(++i);
-									}
-								});
-							};
-							processing++;
-							read(0);
-							processing--;
-						} else {
-							entries = entries.concat(toArray(results));
-							readEntries(dirReader);
-						}
-					});
-				},
-				
-				doScan = function(items, isEntry) {
-					var dirReader, entry;
-					entries = [];
-					var length = items.length;
-					for (var i = 0; i < length; i++) {
-						if (! isEntry) {
-							entry = !!items[i].getAsEntry? items[i].getAsEntry() : items[i].webkitGetAsEntry();
-						} else {
-							entry = items[i];
-						}
-						if (entry.isFile) {
-							paths.push('');
-							files.push(data.files.items[i].getAsFile());
-						} else if (entry.isDirectory) {
-							if (processing > 0) {
-								dirctorys.push(entry);
-							} else {
-								processing = 0;
-								dirReader = entry.createReader();
-								processing++;
-								readEntries(dirReader);
-							}
-						}
-					}
-				};
-				
-				doScan(data.files.items);
-				
-				setTimeout(function wait() {
-					if (processing > 0) {
-						setTimeout(wait, 10);
-					} else {
-						if (dirctorys.length > 0) {
-							doScan([dirctorys.shift()], true);
-							setTimeout(wait, 10);
-						} else {
-							dfrd.resolve([files, paths]);
-						}
-					}
-				}, 10);
-				
-				return dfrd.promise();
-			} else {
-				var ret = [];
-				var regex;
-				var str = data.files[0];
-				if (data.type == 'html') {
-					regex = /<img[^>]+src=["']?([^"'> ]+)/ig;
-					var m = [];
-					var url = '';
-					var links;
-					while (m = regex.exec(str)) {
-						url = m[1].replace(/&amp;/g, '&');
-						if (url.match(/^http/) && $.inArray(url, ret) == -1) ret.push(url);
-					}
-					links = str.match(/<\/a>/i);
-					if (links && links.length == 1) {
-						regex = /<a[^>]+href=["']?([^"'> ]+)((?:.|\s)+)<\/a>/i;
-						if (m = regex.exec(str)) {
-							if (! m[2].match(/<img/i)) {
-								url = m[1].replace(/&amp;/g, '&');
-								if (url.match(/^http/) && $.inArray(url, ret) == -1) ret.push(url);
-							}
-						}
-					}
-				} else {
-					regex = /(http[^<>"{}|\\^\[\]`\s]+)/ig;
-					while (m = regex.exec(str)) {
-						url = m[1].replace(/&amp;/g, '&');
-						if ($.inArray(url, ret) == -1) ret.push(url);
-					}
-				}
-				return ret;
-			}
-		},
 		// upload transport using iframe
 		iframe : function(data, fm) { 
 			var self   = fm ? fm : this,
-				input  = data.input? data.input : false,
-				files  = !input ? self.uploads.checkFile(data, self) : false,
+				input  = data.input,
 				dfrd   = $.Deferred()
 					.fail(function(error) {
 						error && self.error(error);
@@ -2221,18 +2031,14 @@ elFinder.prototype = {
 				cnt, notify, notifyto, abortto
 				
 				;
-
-			if (files && files.length) {
-				$.each(files, function(i, val) {
-					form.append('<input type="hidden" name="upload[]" value="'+val+'"/>');
-				});
-				cnt = 1;
-			} else if (input && $(input).is(':file') && $(input).val()) {
+			
+			if (input && $(input).is(':file') && $(input).val()) {
 				form.append(input);
-				cnt = input.files ? input.files.length : 1;
 			} else {
 				return dfrd.reject();
 			}
+			
+			cnt = input.files ? input.files.length : 1;
 			
 			form.append('<input type="hidden" name="'+(self.newAPI ? 'target' : 'current')+'" value="'+self.cwd().hash+'"/>')
 				.append('<input type="hidden" name="html" value="1"/>')
@@ -2268,13 +2074,12 @@ elFinder.prototype = {
 					})
 					.always(function() {
 						notifyto && clearTimeout(notifyto);
-						! data.checked && notify && self.notify({type : 'upload', cnt : -cnt, progress : 100*cnt});
+						notify && self.notify({type : 'upload', cnt : -cnt, progress : 100*cnt});
 					}),
 				xhr         = new XMLHttpRequest(),
 				formData    = new FormData(),
-				isDataType  = (data.type == 'data'),
-				files       = data.input ? data.input.files : self.uploads.checkFile(data, self), 
-				cnt         = data.checked? (isDataType? files[0].length : files.length) : files.length,
+				files       = data.input ? data.input.files : data.files, 
+				cnt         = files.length,
 				loaded      = 5,
 				notify      = false,
 				startNotify = function() {
@@ -2283,9 +2088,9 @@ elFinder.prototype = {
 						self.notify({type : 'upload', cnt : cnt, progress : loaded*cnt});
 					}, self.options.notifyDelay);
 				},
-				notifyto, notifyto2;
+				notifyto;
 			
-			if (!isDataType && !cnt) {
+			if (!cnt) {
 				return dfrd.reject();
 			}
 			
@@ -2330,134 +2135,43 @@ elFinder.prototype = {
 					// drop file from finder
 					// on first attempt request starts (progress callback called ones) but never ends.
 					// any next drop - successfull.
-					if (!data.checked && curr > 0 && !notifyto) {
+					if (curr > 0 && !notifyto) {
 						notifyto = startNotify();
 					}
 					
 					if (curr - prev > 4) {
 						loaded = curr;
-						(data.checked || notify) && self.notify({type : 'upload', cnt : 0, progress : (loaded - prev)*cnt});
+						notify && self.notify({type : 'upload', cnt : 0, progress : (loaded - prev)*cnt});
 					}
 				}
 			}, false);
 			
-			var send = function(files, paths){
-				var size = 0, fcnt = 1, sfiles = [], c = 0, total = cnt, maxFileSize;
-				if (! data.checked) {
-					maxFileSize = fm.option('uploadMaxSize')? fm.option('uploadMaxSize') : fm.uplMaxSize;
-					for (var i=0; i < files.length; i++) {
-						if (maxFileSize && files[i].size >= maxFileSize) {
-							self.error(self.i18n('errUploadFile', files[i].name) + ' ' + self.i18n('errUploadFileSize'));
-							continue;
-						}
-						if ((fm.uplMaxSize && size + files[i].size >= fm.uplMaxSize) || fcnt > fm.uplMaxFile) {
-							size = 0;
-							fcnt = 1;
-							c++;
-						}
-						if (typeof sfiles[c] == 'undefined') {
-							sfiles[c] = [];
-							if (isDataType) {
-								sfiles[c][0] = [];
-								sfiles[c][1] = [];
-							}
-						}
-						if (isDataType) {
-							sfiles[c][0].push(files[i]);
-							sfiles[c][1].push(paths[i]);
-						} else {
-							sfiles[c].push(files[i]);
-						}
-						size += files[i].size;
-						fcnt++;
-					}
-					
-					if (sfiles.length == 0) {
-						data.checked = true;
-						return false;
-					}
-					
-					if (sfiles.length > 1) {
-						notifyto = startNotify();
-						for (var i=0; i < sfiles.length; i++) {
-							fm.exec('upload', {type: data.type, files: sfiles[i], checked: true}).always(function() {
-								if (notify) {
-									var _cnt = (isDataType? this[0] : this).length;
-									total -= _cnt;
-									if (total < 1) {
-										notifyto && clearTimeout(notifyto);
-										self.notify({type : 'upload', cnt : -cnt, progress : 100 * cnt});
-									}
-								}
-							}.bind(sfiles[i]));
-						}
-						return false;
-					}
-					
-					if (isDataType) {
-						files = sfiles[0][0];
-						paths = sfiles[0][1];
-					} else {
-						files = sfiles[0];
-					}
-				}
-				
-				xhr.open('POST', self.uploadURL, true);
-				formData.append('cmd', 'upload');
-				formData.append(self.newAPI ? 'target' : 'current', self.cwd().hash);
-				$.each(self.options.customData, function(key, val) {
-					formData.append(key, val);
-				});
-				$.each(self.options.onlyMimes, function(i, mime) {
-					formData.append('mimes['+i+']', mime);
-				});
-				
-				$.each(files, function(i, file) {
-					formData.append('upload[]', file);
-				});
-				
-				if (isDataType) {
-					$.each(paths, function(i, path) {
-						formData.append('upload_path[]', path);
-					});
-				}
-				
-				xhr.onreadystatechange = function() {
-					if (xhr.readyState == 4 && xhr.status == 0) {
-						// ff bug while send zero sized file
-						// for safari - send directory
-						dfrd.reject(['errConnect', 'errAbort']);
-					}
-				}
-				
-				xhr.send(formData);
-				
-				return true;
-			};
 			
-			if (! isDataType) {
-				if (! send(files)) {
-					dfrd.reject();
-				}
-			} else {
-				if (!! data.checked) {
-					send(files[0], files[1]);
-				} else {
-					notifyto2 = setTimeout(function() {
-						self.notify({type : 'readdir', cnt : 1, hideCnt: true});
-					}, self.options.notifyDelay);
-					files.done(function(result){
-						notifyto2 && clearTimeout(notifyto2);
-						self.notify({type : 'readdir', cnt : -1});
-						cnt = result[0].length;
-						send(result[0], result[1]);
-					}).fail(function(){
-						dfrd.reject();
-					});
+			xhr.open('POST', self.uploadURL, true);
+			formData.append('cmd', 'upload');
+			formData.append(self.newAPI ? 'target' : 'current', self.cwd().hash);
+			$.each(self.options.customData, function(key, val) {
+				formData.append(key, val);
+			});
+			$.each(self.options.onlyMimes, function(i, mime) {
+				formData.append('mimes['+i+']', mime);
+			});
+			
+			$.each(files, function(i, file) {
+				formData.append('upload[]', file);
+			});
+			
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState == 4 && xhr.status == 0) {
+					// ff bug while send zero sized file
+					// for safari - send directory
+					dfrd.reject(['errConnect', 'errAbort']);
 				}
 			}
+			
+			xhr.send(formData);
 
-			if (!isDataType && !data.checked && (!this.UA.Safari || !data.files)) {
+			if (!this.UA.Safari || !data.files) {
 				notifyto = startNotify();
 			}
 			
@@ -2715,7 +2429,7 @@ elFinder.prototype = {
 			notify   = ndialog.children('.elfinder-notify-'+type),
 			ntpl     = '<div class="elfinder-notify elfinder-notify-{type}"><span class="elfinder-dialog-icon elfinder-dialog-icon-{type}"/><span class="elfinder-notify-msg">{msg}</span> <span class="elfinder-notify-cnt"/><div class="elfinder-notify-progressbar"><div class="elfinder-notify-progress"/></div></div>',
 			delta    = opts.cnt,
-			progress = opts.progress >= 0 ? opts.progress : 0,
+			progress = opts.progress >= 0 && opts.progress <= 100 ? opts.progress : 0,
 			cnt, total, prc;
 
 		if (!type) {
@@ -2739,7 +2453,7 @@ elFinder.prototype = {
 			ndialog.is(':hidden') && ndialog.elfinderdialog('open');
 			notify.data('cnt', cnt);
 			
-			if (progress
+			if (progress < 100
 			&& (total = notify.data('total')) >= 0
 			&& (prc = notify.data('progress')) >= 0) {
 
